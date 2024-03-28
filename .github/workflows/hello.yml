@@ -1,0 +1,36 @@
+# <project_root>/.github/workflows/hello.yml
+
+name: Hello world!;
+
+on:
+  workflow_dispatch:
+
+jobs:
+  app-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: eu-central-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to AWS CodeArtifact
+        run: |
+            aws codeartifact login --tool npm --repository ${{ secrets.AWS_CODEARTIFACT_REPOSITORY }} --domain ${{ secrets.AWS_CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.AWS_CODEARTIFACT_DOMAIN_OWNER }}
+
+      - name: Configure node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Greeting
+        run: echo "Brawo! Znakomita robota!" >> $GITHUB_STEP_SUMMARY
