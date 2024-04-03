@@ -23,7 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-slate-100 min-h-screen p-8">
         <h1 className="bg-white text-center text-2xl leading-10 rounded-md mb-4 font-bold">
-          Wellcome to Rick and Morty App
+          Wellcome to Rick and Morty App 🚀
         </h1>
         {children}
         <ScrollRestoration />

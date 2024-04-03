@@ -1,0 +1,56 @@
+# <project_root>/.github/workflows/deploy.yml
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  app-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: eu-central-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to AWS CodeArtifact
+        run: |
+            aws codeartifact login --tool npm --repository ${{ secrets.AWS_CODEARTIFACT_REPOSITORY }} --domain ${{ secrets.AWS_CODEARTIFACT_DOMAIN }} --domain-owner ${{ secrets.AWS_CODEARTIFACT_DOMAIN_OWNER }}
+
+      - name: Configure node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Generate Netlify functions
+        run: netlify functions:build --src .netlify/functions-internal --functions ./build/client/functions
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: "./build/client"
+          production-branch: master
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deployed from GitHub Actions"
+          functions-dir: ".netlify/functions-internal"
+          netlify-config-path: 'netlify.toml'
+
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
